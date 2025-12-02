@@ -153,6 +153,155 @@ $total_revenue = 0;
                 </tfoot>
             </table>
         </div>
+
+        <!-- Product Sales Report Section -->
+        <?php
+        // Product sales filter
+        $product_filter = $_GET['product_filter'] ?? 'today';
+        $product_week_offset = isset($_GET['product_week_offset']) ? (int)$_GET['product_week_offset'] : 0;
+        $product_month_offset = isset($_GET['product_month_offset']) ? (int)$_GET['product_month_offset'] : 0;
+        $product_where = "";
+
+        if ($product_filter == 'today') {
+            $product_where = "AND DATE(s.created_at) = CURDATE()";
+        } elseif ($product_filter == 'week') {
+            if ($product_week_offset == 0) {
+                $p_monday = date('Y-m-d', strtotime('monday this week'));
+                $p_sunday = date('Y-m-d', strtotime('sunday this week'));
+            } else {
+                $p_monday = date('Y-m-d', strtotime('monday this week ' . ($product_week_offset > 0 ? '+' : '') . $product_week_offset . ' weeks'));
+                $p_sunday = date('Y-m-d', strtotime('sunday this week ' . ($product_week_offset > 0 ? '+' : '') . $product_week_offset . ' weeks'));
+            }
+            $product_where = "AND DATE(s.created_at) BETWEEN '$p_monday' AND '$p_sunday'";
+        } elseif ($product_filter == 'month') {
+            if ($product_month_offset == 0) {
+                $p_target_month = date('Y-m');
+            } else {
+                $p_target_month = date('Y-m', strtotime(($product_month_offset > 0 ? '+' : '') . $product_month_offset . ' months'));
+            }
+            $product_where = "AND DATE_FORMAT(s.created_at, '%Y-%m') = '$p_target_month'";
+        }
+
+        // Query product sales
+        $product_sales_query = "
+            SELECT p.name, 
+                   SUM(si.quantity) as total_quantity,
+                   SUM(si.quantity * si.price) as total_revenue
+            FROM sale_items si
+            JOIN products p ON si.product_id = p.id
+            JOIN sales s ON si.sale_id = s.id
+            WHERE s.shop_id = $shop_id $product_where
+            GROUP BY p.id, p.name
+            ORDER BY total_quantity DESC
+        ";
+        $product_sales = mysqli_query($conn, $product_sales_query);
+        ?>
+
+        <div style="margin-top: 40px;">
+            <h3 style="margin: 20px; color: var(--text-main);">Product Sales Report</h3>
+            
+            <div style="margin: 20px 0; text-align: center;">
+                <div style="margin-bottom: 15px;">
+                    <a href="?filter=<?php echo $filter; ?>&week_offset=<?php echo $week_offset; ?>&month_offset=<?php echo $month_offset; ?>&product_filter=today" 
+                       class="btn <?php echo $product_filter=='today'?'btn-primary':'btn-secondary'; ?>" 
+                       style="padding: 8px 15px; font-size: 0.8rem;">Today</a>
+                    <a href="?filter=<?php echo $filter; ?>&week_offset=<?php echo $week_offset; ?>&month_offset=<?php echo $month_offset; ?>&product_filter=week&product_week_offset=0" 
+                       class="btn <?php echo $product_filter=='week'?'btn-primary':'btn-secondary'; ?>" 
+                       style="padding: 8px 15px; font-size: 0.8rem;">Weekly</a>
+                    <a href="?filter=<?php echo $filter; ?>&week_offset=<?php echo $week_offset; ?>&month_offset=<?php echo $month_offset; ?>&product_filter=month&product_month_offset=0" 
+                       class="btn <?php echo $product_filter=='month'?'btn-primary':'btn-secondary'; ?>" 
+                       style="padding: 8px 15px; font-size: 0.8rem;">Monthly</a>
+                </div>
+
+                <?php
+                $product_date_display = '';
+                if ($product_filter == 'today') {
+                    $product_date_display = date('d M y');
+                } elseif ($product_filter == 'week') {
+                    if ($product_week_offset == 0) {
+                        $p_start = date('d M', strtotime('monday this week'));
+                        $p_end = date('d M', strtotime('sunday this week'));
+                    } else {
+                        $p_start = date('d M', strtotime('monday this week ' . ($product_week_offset > 0 ? '+' : '') . $product_week_offset . ' weeks'));
+                        $p_end = date('d M', strtotime('sunday this week ' . ($product_week_offset > 0 ? '+' : '') . $product_week_offset . ' weeks'));
+                    }
+                    $p_prev_offset = $product_week_offset - 1;
+                    $p_next_offset = $product_week_offset + 1;
+                    ?>
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 10px;">
+                        <a href="?filter=<?php echo $filter; ?>&week_offset=<?php echo $week_offset; ?>&month_offset=<?php echo $month_offset; ?>&product_filter=week&product_week_offset=<?php echo $p_prev_offset; ?>" 
+                           class="btn btn-secondary" style="padding: 8px 12px; font-size: 1rem; line-height: 1;" title="Previous week">←</a>
+                        <div class="current-date" style="display: inline-block; font-size: 0.9rem; padding: 4px 12px; min-width: 120px; text-align: center;">
+                            <?php echo "$p_start - $p_end"; ?>
+                        </div>
+                        <a href="?filter=<?php echo $filter; ?>&week_offset=<?php echo $week_offset; ?>&month_offset=<?php echo $month_offset; ?>&product_filter=week&product_week_offset=<?php echo $p_next_offset; ?>" 
+                           class="btn btn-secondary" style="padding: 8px 12px; font-size: 1rem; line-height: 1;" title="Next week">→</a>
+                    </div>
+                    <?php
+                } elseif ($product_filter == 'month') {
+                    if ($product_month_offset == 0) {
+                        $p_month_display = date('F Y');
+                    } else {
+                        $p_month_display = date('F Y', strtotime(($product_month_offset > 0 ? '+' : '') . $product_month_offset . ' months'));
+                    }
+                    $p_prev_offset = $product_month_offset - 1;
+                    $p_next_offset = $product_month_offset + 1;
+                    ?>
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 10px;">
+                        <a href="?filter=<?php echo $filter; ?>&week_offset=<?php echo $week_offset; ?>&month_offset=<?php echo $month_offset; ?>&product_filter=month&product_month_offset=<?php echo $p_prev_offset; ?>" 
+                           class="btn btn-secondary" style="padding: 8px 12px; font-size: 1rem; line-height: 1;" title="Previous month">←</a>
+                        <div class="current-date" style="display: inline-block; font-size: 0.9rem; padding: 4px 12px; min-width: 120px; text-align: center;">
+                            <?php echo $p_month_display; ?>
+                        </div>
+                        <a href="?filter=<?php echo $filter; ?>&week_offset=<?php echo $week_offset; ?>&month_offset=<?php echo $month_offset; ?>&product_filter=month&product_month_offset=<?php echo $p_next_offset; ?>" 
+                           class="btn btn-secondary" style="padding: 8px 12px; font-size: 1rem; line-height: 1;" title="Next month">→</a>
+                    </div>
+                    <?php
+                }
+
+                if ($product_filter == 'today' && $product_date_display):
+                ?>
+                <div class="current-date" style="display: inline-block; font-size: 0.9rem; padding: 4px 12px;">
+                    <?php echo $product_date_display; ?>
+                </div>
+                <?php endif; ?>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th style="text-align: center;">Quantity Sold</th>
+                            <th style="text-align: right;">Revenue</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php 
+                        $total_product_revenue = 0;
+                        if (mysqli_num_rows($product_sales) > 0):
+                            while ($row = mysqli_fetch_assoc($product_sales)): 
+                                $total_product_revenue += $row['total_revenue'];
+                        ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($row['name']); ?></td>
+                            <td style="text-align: center; font-weight: 600;"><?php echo $row['total_quantity']; ?></td>
+                            <td style="text-align: right;"><?php echo formatPrice($row['total_revenue']); ?></td>
+                        </tr>
+                        <?php endwhile; 
+                        else: ?>
+                        <tr><td colspan="3" style="text-align: center;">No product sales found.</td></tr>
+                        <?php endif; ?>
+                    </tbody>
+                    <tfoot>
+                        <tr style="font-weight: bold; border-top: 2px solid var(--card-border);">
+                            <td colspan="2" style="text-align: right;">Total Revenue:</td>
+                            <td style="text-align: right;"><?php echo formatPrice($total_product_revenue); ?></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
     </div>
 
     <!-- Sale Details Modal -->
