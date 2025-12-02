@@ -37,12 +37,14 @@ CREATE TABLE IF NOT EXISTS products (
 CREATE TABLE IF NOT EXISTS sales (
     id INT AUTO_INCREMENT PRIMARY KEY,
     shop_id INT NOT NULL,
+    shop_order_number INT NOT NULL DEFAULT 0,
     user_id INT NOT NULL,
     total DECIMAL(10, 2) NOT NULL,
     payment_method VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    INDEX idx_shop_order (shop_id, shop_order_number)
 );
 
 -- 5. Sale Items Table

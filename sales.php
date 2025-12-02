@@ -12,8 +12,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['complete_sale'])) {
     $user_id = $_SESSION['user_id'];
 
     if (!empty($data)) {
-        // Create Sale
-        $sql = "INSERT INTO sales (shop_id, user_id, total, payment_method) VALUES ($shop_id, $user_id, $total, '$payment')";
+        // Get the next shop order number for this shop
+        $order_num_result = mysqli_query($conn, "SELECT COALESCE(MAX(shop_order_number), 0) + 1 AS next_num FROM sales WHERE shop_id = $shop_id");
+        $order_num_row = mysqli_fetch_assoc($order_num_result);
+        $shop_order_number = $order_num_row['next_num'];
+        
+        // Create Sale with shop-specific order number
+        $sql = "INSERT INTO sales (shop_id, shop_order_number, user_id, total, payment_method) VALUES ($shop_id, $shop_order_number, $user_id, $total, '$payment')";
         if (mysqli_query($conn, $sql)) {
             $sale_id = mysqli_insert_id($conn);
             

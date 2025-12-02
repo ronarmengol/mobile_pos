@@ -127,7 +127,7 @@ $total_revenue = 0;
                             $total_revenue += $row['total'];
                     ?>
                     <tr>
-                        <td><a href="#" onclick="viewSaleDetails(<?php echo $row['id']; ?>); return false;" style="color: var(--primary); cursor: pointer; text-decoration: underline;">#<?php echo $row['id']; ?></a></td>
+                        <td><a href="#" onclick="viewSaleDetails(<?php echo $row['id']; ?>); return false;" style="color: var(--primary); cursor: pointer; text-decoration: underline;">#<?php echo $row['shop_order_number']; ?></a></td>
                         <td>
                             <?php 
                             if ($filter == 'today') {
