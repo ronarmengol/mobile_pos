@@ -56,7 +56,7 @@ while ($row = mysqli_fetch_assoc($products_res)) {
     <div class="sales-topbar">
         <a href="dashboard.php" class="btn-back">←</a>
         <h2 style="margin: 0; font-size: 1.2rem;">New Sale</h2>
-        <div style="width: 44px;"></div> <!-- Spacer for centering -->
+        <button onclick="resetCart()" class="btn-reset" title="Clear all orders">🗑️</button>
     </div>
 
     <!-- Main Content: Products Grid (Full Screen) -->
@@ -168,6 +168,26 @@ while ($row = mysqli_fetch_assoc($products_res)) {
             if (count > 0 && !cartExpanded) {
                 toggleCart();
             }
+        }
+        
+        // Reset cart (clear all orders)
+        function resetCart() {
+            if (cart.length === 0) {
+                Modal.alert("Cart is already empty.", "No Orders");
+                return;
+            }
+            
+            Modal.confirm(
+                "Are you sure you want to clear all orders from the cart?",
+                () => {
+                    cart = [];
+                    renderCart();
+                    if (cartExpanded) {
+                        toggleCart();
+                    }
+                },
+                "Clear Cart"
+            );
         }
         
         // Override renderCart to update badge
