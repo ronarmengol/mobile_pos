@@ -28,6 +28,17 @@ function requireAdmin() {
     }
 }
 
+function isSuperAdmin() {
+    return isset($_SESSION['role']) && $_SESSION['role'] === 'superadmin';
+}
+
+function requireSuperAdmin() {
+    requireLogin();
+    if (!isSuperAdmin()) {
+        die("Access Denied. Superadmins only.");
+    }
+}
+
 function sanitize($conn, $input) {
     return mysqli_real_escape_string($conn, htmlspecialchars(trim($input)));
 }

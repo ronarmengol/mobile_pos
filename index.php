@@ -19,7 +19,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $_SESSION['role'] = $user['role'];
             $_SESSION['shop_id'] = $user['shop_id'];
             
-            header("Location: dashboard.php");
+            if ($user['role'] === 'superadmin') {
+                header("Location: superadmin_dashboard.php");
+            } else {
+                header("Location: dashboard.php");
+            }
             exit();
         } else {
             $error = "Invalid password.";
