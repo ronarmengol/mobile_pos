@@ -36,7 +36,7 @@ const Modal = {
     const actionsEl = document.getElementById("modalActions");
 
     titleEl.textContent = title;
-    msgEl.textContent = message;
+    msgEl.innerHTML = message;
     actionsEl.innerHTML = "";
 
     if (type === "confirm") {

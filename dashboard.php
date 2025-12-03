@@ -201,6 +201,29 @@ $current_user = mysqli_fetch_assoc($user_result);
                 <div style="margin-top: 10px; padding: 8px; background: rgba(239, 68, 68, 0.1); border-radius: 6px; font-size: 0.85rem; color: #fca5a5;">
                     ⚠️ Your subscription is expiring soon. Please contact support to renew.
                 </div>
+                
+                <!-- Expiration Reminder Popover -->
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const daysLeft = <?php echo $days_left; ?>;
+                        const now = new Date().getTime();
+                        const lastReminded = localStorage.getItem('subscription_reminder_timestamp');
+                        const twoHours = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+                        
+                        // Show reminder if less than 8 days AND (never shown OR more than 2 hours ago)
+                        if (daysLeft < 8) {
+                            if (!lastReminded || (now - lastReminded) > twoHours) {
+                                if (typeof Modal !== 'undefined') {
+                                    Modal.alert(
+                                        `⚠️ <strong>Subscription Expiring Soon!</strong><br><br>You have <strong>${daysLeft} days</strong> remaining on your subscription.<br>Please contact support to renew and avoid service interruption.`, 
+                                        'Subscription Reminder'
+                                    );
+                                    localStorage.setItem('subscription_reminder_timestamp', now);
+                                }
+                            }
+                        }
+                    });
+                </script>
                 <?php endif; ?>
             </div>
             <?php

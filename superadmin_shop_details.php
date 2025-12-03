@@ -41,6 +41,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } else {
             $error = "Error extending subscription: " . mysqli_error($conn);
         }
+    } elseif (isset($_POST['set_subscription_date'])) {
+        $expiry_date = $_POST['expiry_date'];
+        
+        // Validate date format (DD/MM/YYYY)
+        $date_obj = DateTime::createFromFormat('d/m/Y', $expiry_date);
+        
+        if ($date_obj && $date_obj->format('d/m/Y') === $expiry_date) {
+            $new_expiry = $date_obj->format('Y-m-d') . ' 23:59:59';
+            
+            // Check if date is in the past
+            if ($new_expiry < date('Y-m-d H:i:s')) {
+                $error = "Expiry date cannot be in the past.";
+            } else {
+                $sql = "UPDATE shops SET subscription_expiry = '$new_expiry', status = 'active' WHERE id = $shop_id";
+                if (mysqli_query($conn, $sql)) {
+                    $message = "Subscription expiry date set to: " . $date_obj->format('d M Y');
+                } else {
+                    $error = "Error setting subscription date: " . mysqli_error($conn);
+                }
+            }
+        } else {
+            $error = "Invalid date format. Please use DD/MM/YYYY.";
+        }
     } elseif (isset($_POST['deactivate_shop'])) {
         $sql = "UPDATE shops SET status = 'inactive' WHERE id = $shop_id";
         if (mysqli_query($conn, $sql)) {
@@ -263,6 +286,35 @@ $users_result = mysqli_query($conn, $users_query);
                     <?php endwhile; ?>
                 </tbody>
             </table>
+        </div>
+        
+        <!-- Manual Subscription Date Setter -->
+        <div class="card" style="margin-top: 30px;">
+            <h3>📅 Set Subscription Expiry Date</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">
+                Manually set a specific expiration date for this shop's subscription. This will override the current expiry date and activate the account.
+            </p>
+            <form method="POST">
+                <input type="hidden" name="set_subscription_date" value="1">
+                <div style="display: flex; gap: 15px; align-items: end;">
+                    <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                        <label>Expiration Date (DD/MM/YYYY)</label>
+                        <input type="text" name="expiry_date" required 
+                               placeholder="DD/MM/YYYY"
+                               pattern="\d{2}/\d{2}/\d{4}"
+                               maxlength="10"
+                               oninput="let v=this.value.replace(/\D/g,''); if(v.length>8) v=v.substring(0,8); if(v.length>=5) this.value=v.substring(0,2)+'/'+v.substring(2,4)+'/'+v.substring(4,8); else if(v.length>=3) this.value=v.substring(0,2)+'/'+v.substring(2); else this.value=v;"
+                               value="<?php echo $shop['subscription_expiry'] ? date('d/m/Y', strtotime($shop['subscription_expiry'])) : date('d/m/Y', strtotime('+30 days')); ?>"
+                               style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); border-radius: 6px; color: white;">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="padding: 10px 20px;">
+                        Set Expiry Date
+                    </button>
+                </div>
+                <div style="color: var(--text-muted); font-size: 0.85rem; margin-top: 10px;">
+                    💡 Current expiry: <strong><?php echo $shop['subscription_expiry'] ? date('d M Y', strtotime($shop['subscription_expiry'])) : 'Not set'; ?></strong>
+                </div>
+            </form>
         </div>
         
         <!-- Danger Zone -->
