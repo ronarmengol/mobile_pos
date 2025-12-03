@@ -2,6 +2,29 @@
 require_once 'functions.php';
 requireSuperAdmin();
 
+$message = '';
+$error = '';
+
+// Handle superadmin credential update
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_superadmin'])) {
+    $new_username = sanitize($conn, $_POST['username']);
+    $new_password = $_POST['password'];
+    
+    $sql = "UPDATE users SET username = '$new_username', password = '$new_password' WHERE role = 'superadmin'";
+    if (mysqli_query($conn, $sql)) {
+        $message = "Superadmin credentials updated successfully.";
+        $_SESSION['username'] = $new_username;
+    } else {
+        $error = "Error updating credentials: " . mysqli_error($conn);
+    }
+}
+
+// Get current superadmin info
+$superadmin_query = "SELECT * FROM users WHERE role = 'superadmin' LIMIT 1";
+$superadmin_result = mysqli_query($conn, $superadmin_query);
+$superadmin = mysqli_fetch_assoc($superadmin_result);
+
+
 // Fetch all shops except the superadmin shop
 $shops_query = "
     SELECT s.*, 
@@ -104,7 +127,10 @@ $shops_result = mysqli_query($conn, $shops_query);
             <h2 style="margin: 0; color: white;">Superadmin Dashboard</h2>
             <span style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Overseeing <?php echo mysqli_num_rows($shops_result); ?> Shops</span>
         </div>
-        <a href="logout.php" class="btn btn-secondary" style="background: rgba(255,255,255,0.2); border: none;">Logout</a>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="openCredentialsModal()" class="btn btn-secondary" style="background: rgba(255,255,255,0.2); border: none;">⚙️ Settings</button>
+            <a href="logout.php" class="btn btn-secondary" style="background: rgba(255,255,255,0.2); border: none;">Logout</a>
+        </div>
     </div>
 
     <div class="app-container">
@@ -153,5 +179,68 @@ $shops_result = mysqli_query($conn, $shops_query);
             <?php endif; ?>
         </div>
     </div>
+
+    <!-- Superadmin Credentials Modal -->
+    <div id="credentialsModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 400px;">
+            <h3>Update Superadmin Credentials</h3>
+            <form method="POST">
+                <input type="hidden" name="update_superadmin" value="1">
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; color: var(--text-muted);">Username</label>
+                    <input type="text" name="username" value="<?php echo htmlspecialchars($superadmin['username']); ?>" required style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); border-radius: 6px; color: white;">
+                </div>
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; color: var(--text-muted);">Password</label>
+                    <input type="text" name="password" value="<?php echo htmlspecialchars($superadmin['password']); ?>" required style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); border-radius: 6px; color: white;">
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" onclick="closeCredentialsModal()" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <?php if ($message): ?>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                if (typeof Modal !== 'undefined') {
+                    Modal.alert('<?php echo addslashes($message); ?>', 'Success');
+                } else {
+                    alert('<?php echo addslashes($message); ?>');
+                }
+            });
+        </script>
+    <?php endif; ?>
+    <?php if ($error): ?>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                if (typeof Modal !== 'undefined') {
+                    Modal.alert('<?php echo addslashes($error); ?>', 'Error');
+                } else {
+                    alert('<?php echo addslashes($error); ?>');
+                }
+            });
+        </script>
+    <?php endif; ?>
+
+    <script src="js/modal.js"></script>
+    <script>
+        function openCredentialsModal() {
+            document.getElementById('credentialsModal').classList.add('active');
+        }
+
+        function closeCredentialsModal() {
+            document.getElementById('credentialsModal').classList.remove('active');
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('credentialsModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeCredentialsModal();
+            }
+        });
+    </script>
 </body>
 </html>
