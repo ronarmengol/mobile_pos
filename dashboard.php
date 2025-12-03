@@ -1,6 +1,40 @@
 <?php
 require_once 'functions.php';
 requireLogin();
+
+$message = '';
+$error = '';
+
+// Handle user profile update
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_profile'])) {
+    $new_username = sanitize($conn, $_POST['username']);
+    $new_password = $_POST['password'];
+    $user_id = $_SESSION['user_id'];
+    $current_username = $_SESSION['username'];
+    
+    // Check if username is being changed and if it's unique
+    if ($new_username !== $current_username) {
+        $check = mysqli_query($conn, "SELECT id FROM users WHERE username = '$new_username' AND id != $user_id");
+        if (mysqli_num_rows($check) > 0) {
+            $error = "Username already exists. Please choose another.";
+        }
+    }
+    
+    if (empty($error)) {
+        $sql = "UPDATE users SET username = '$new_username', password = '$new_password' WHERE id = $user_id";
+        if (mysqli_query($conn, $sql)) {
+            $message = "Profile updated successfully.";
+            $_SESSION['username'] = $new_username;
+        } else {
+            $error = "Error updating profile: " . mysqli_error($conn);
+        }
+    }
+}
+
+// Get current user info
+$user_query = "SELECT * FROM users WHERE id = " . $_SESSION['user_id'];
+$user_result = mysqli_query($conn, $user_query);
+$current_user = mysqli_fetch_assoc($user_result);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -26,6 +60,7 @@ requireLogin();
             <a href="#">Stock</a>
             <a href="#">Profile</a>
             <?php endif; ?>
+            <button onclick="openProfileModal()" class="btn btn-secondary" style="padding: 8px 16px;">⚙️ Settings</button>
             <a href="logout.php" class="btn-logout-desktop">Logout</a>
         </nav>
     </div>
@@ -33,7 +68,10 @@ requireLogin();
     <!-- Top Header (minimal on mobile) -->
     <div class="mobile-header">
         <h2><?php echo htmlspecialchars($_SESSION['username']); ?>'s Shop</h2>
-        <a href="logout.php" class="btn-logout">⏻</a>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="openProfileModal()" class="btn-logout" style="background: rgba(255,255,255,0.1);">⚙️</button>
+            <a href="logout.php" class="btn-logout">⏻</a>
+        </div>
     </div>
 
     <div class="dashboard-container">
@@ -199,5 +237,68 @@ requireLogin();
         </a>
         <?php endif; ?>
     </nav>
+
+    <!-- Profile Settings Modal -->
+    <div id="profileModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 400px;">
+            <h3>Profile Settings</h3>
+            <form method="POST">
+                <input type="hidden" name="update_profile" value="1">
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; color: var(--text-muted);">Username</label>
+                    <input type="text" name="username" value="<?php echo htmlspecialchars($current_user['username']); ?>" required style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); border-radius: 6px; color: white;">
+                </div>
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; color: var(--text-muted);">Password</label>
+                    <input type="text" name="password" value="<?php echo htmlspecialchars($current_user['password']); ?>" required style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); border-radius: 6px; color: white;">
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" onclick="closeProfileModal()" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <?php if ($message): ?>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                if (typeof Modal !== 'undefined') {
+                    Modal.alert('<?php echo addslashes($message); ?>', 'Success');
+                } else {
+                    alert('<?php echo addslashes($message); ?>');
+                }
+            });
+        </script>
+    <?php endif; ?>
+    <?php if ($error): ?>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                if (typeof Modal !== 'undefined') {
+                    Modal.alert('<?php echo addslashes($error); ?>', 'Error');
+                } else {
+                    alert('<?php echo addslashes($error); ?>');
+                }
+            });
+        </script>
+    <?php endif; ?>
+
+    <script src="js/modal.js"></script>
+    <script>
+        function openProfileModal() {
+            document.getElementById('profileModal').classList.add('active');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.remove('active');
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('profileModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeProfileModal();
+            }
+        });
+    </script>
 </body>
 </html>
