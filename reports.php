@@ -184,7 +184,7 @@ $total_revenue = 0;
 
         // Query product sales
         $product_sales_query = "
-            SELECT p.name, 
+            SELECT p.id, p.name, 
                    SUM(si.quantity) as total_quantity,
                    SUM(si.quantity * si.price) as total_revenue
             FROM sale_items si
@@ -284,7 +284,21 @@ $total_revenue = 0;
                                 $total_product_revenue += $row['total_revenue'];
                         ?>
                         <tr>
-                            <td><?php echo htmlspecialchars($row['name']); ?></td>
+                            <td>
+                                <?php if ($product_filter == 'week' || $product_filter == 'month'): ?>
+                                    <?php 
+                                    $name_safe = htmlspecialchars($row['name'], ENT_QUOTES);
+                                    printf(
+                                        '<a href="#" data-id="%s" data-name="%s" onclick="viewProductDailySales(this.dataset.id, this.dataset.name); return false;" style="color: var(--primary); cursor: pointer; text-decoration: underline;">%s</a>',
+                                        $row['id'],
+                                        $name_safe,
+                                        $name_safe
+                                    );
+                                    ?>
+                                <?php else: ?>
+                                    <?php echo htmlspecialchars($row['name']); ?>
+                                <?php endif; ?>
+                            </td>
                             <td style="text-align: center; font-weight: 600;"><?php echo $row['total_quantity']; ?></td>
                             <td style="text-align: right;"><?php echo formatPrice($row['total_revenue']); ?></td>
                         </tr>
@@ -316,6 +330,19 @@ $total_revenue = 0;
             </div>
             <div id="saleDetailsFooter" style="margin-top: 20px; padding-top: 15px; border-top: 2px solid var(--card-border);">
                 <!-- Total will be displayed here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Daily Sales Modal -->
+    <div id="productSalesModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 class="modal-title" id="productSalesTitle">Product Sales</h3>
+                <button onclick="closeProductSales()" class="btn-close" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">✕</button>
+            </div>
+            <div id="productSalesContent" style="max-height: 400px; overflow-y: auto;">
+                <div style="text-align: center; padding: 20px; color: var(--text-muted);">Loading...</div>
             </div>
         </div>
     </div>
@@ -381,6 +408,66 @@ $total_revenue = 0;
         document.getElementById('saleDetailsModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeSaleDetails();
+            }
+        });
+
+        // Product Daily Sales Logic
+        function viewProductDailySales(productId, productName) {
+            document.getElementById('productSalesTitle').textContent = productName;
+            document.getElementById('productSalesModal').classList.add('active');
+            document.getElementById('productSalesContent').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">Loading...</div>';
+            
+            const filter = '<?php echo $product_filter; ?>';
+            const offset = '<?php echo ($product_filter == "week") ? $product_week_offset : $product_month_offset; ?>';
+            
+            fetch(`get_product_daily_sales.php?product_id=${productId}&filter=${filter}&offset=${offset}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayProductDailySales(data.data);
+                    } else {
+                        document.getElementById('productSalesContent').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--danger);">Error loading data.</div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('productSalesContent').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--danger);">Error loading data.</div>';
+                });
+        }
+
+        function displayProductDailySales(data) {
+            let html = '<table style="width: 100%; border-collapse: collapse;">';
+            html += '<thead><tr style="border-bottom: 1px solid var(--card-border);"><th style="text-align: left; padding: 8px;">Date</th><th style="text-align: center; padding: 8px;">Quantity Sold</th></tr></thead>';
+            html += '<tbody>';
+            
+            let totalQty = 0;
+            
+            data.forEach(item => {
+                totalQty += parseInt(item.quantity);
+                // Highlight rows with sales
+                const bgStyle = item.quantity > 0 ? 'background-color: rgba(var(--primary-rgb), 0.05);' : '';
+                const textStyle = item.quantity > 0 ? 'font-weight: bold; color: var(--text-main);' : 'color: var(--text-muted);';
+                
+                html += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05); ${bgStyle}">
+                    <td style="padding: 8px; ${textStyle}">${item.date}</td>
+                    <td style="text-align: center; padding: 8px; ${textStyle}">${item.quantity}</td>
+                </tr>`;
+            });
+            
+            html += '</tbody>';
+            html += '<tfoot><tr style="border-top: 2px solid var(--card-border); font-weight: bold;"><td style="padding: 8px; text-align: right;">Total:</td><td style="padding: 8px; text-align: center;">' + totalQty + '</td></tr></tfoot>';
+            html += '</table>';
+            
+            document.getElementById('productSalesContent').innerHTML = html;
+        }
+
+        function closeProductSales() {
+            document.getElementById('productSalesModal').classList.remove('active');
+        }
+
+        document.getElementById('productSalesModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeProductSales();
             }
         });
     </script>

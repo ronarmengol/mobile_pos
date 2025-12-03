@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $error = "Your subscription has expired on " . date('d M Y', strtotime($shop_data['subscription_expiry'])) . ". Please renew to continue.";
                 }
                 
-                if (isset($error)) {
+                if (!empty($error)) {
                     // Don't set session if error
                     session_unset();
                     session_destroy();
