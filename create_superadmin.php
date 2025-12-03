@@ -29,7 +29,7 @@ if (mysqli_num_rows($check_shop) == 0) {
 // 3. Insert Superadmin User
 $username = 'superadmin';
 $password = '123';
-$hashed_password = password_hash($password, PASSWORD_DEFAULT);
+$hashed_password = $password;
 $role = 'superadmin';
 
 $check_user = mysqli_query($conn, "SELECT id FROM users WHERE username = '$username'");

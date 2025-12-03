@@ -117,7 +117,12 @@ $shops_result = mysqli_query($conn, $shops_query);
                                 <div class="shop-name"><?php echo htmlspecialchars($shop['name']); ?></div>
                                 <div class="shop-location">📍 <?php echo htmlspecialchars($shop['location']); ?></div>
                             </div>
-                            <span class="badge">Active</span>
+                            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
+                                <span class="badge" style="<?php echo isset($shop['status']) && $shop['status'] == 'inactive' ? 'background: rgba(239, 68, 68, 0.2); color: #ef4444;' : ''; ?>">
+                                    <?php echo isset($shop['status']) ? ucfirst($shop['status']) : 'Active'; ?>
+                                </span>
+                                <a href="superadmin_shop_details.php?id=<?php echo $shop['id']; ?>" class="btn btn-primary" style="padding: 4px 10px; font-size: 0.8rem;">Manage</a>
+                            </div>
                         </div>
                         
                         <div class="shop-stats">

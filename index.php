@@ -13,18 +13,41 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     if ($result && mysqli_num_rows($result) > 0) {
         $user = mysqli_fetch_assoc($result);
-        if (password_verify($password, $user['password'])) {
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['username'] = $user['username'];
-            $_SESSION['role'] = $user['role'];
-            $_SESSION['shop_id'] = $user['shop_id'];
-            
-            if ($user['role'] === 'superadmin') {
-                header("Location: superadmin_dashboard.php");
+        if ($password === $user['password']) {
+            // Check Shop Status & Subscription (skip for superadmin)
+            if ($user['role'] !== 'superadmin') {
+                $shop_id = $user['shop_id'];
+                $shop_check = mysqli_query($conn, "SELECT status, subscription_expiry FROM shops WHERE id = $shop_id");
+                $shop_data = mysqli_fetch_assoc($shop_check);
+                
+                if ($shop_data['status'] === 'inactive') {
+                    $error = "Your shop account has been deactivated. Please contact support.";
+                } elseif ($shop_data['subscription_expiry'] && strtotime($shop_data['subscription_expiry']) < time()) {
+                    $error = "Your subscription has expired on " . date('d M Y', strtotime($shop_data['subscription_expiry'])) . ". Please renew to continue.";
+                }
+                
+                if (isset($error)) {
+                    // Don't set session if error
+                    session_unset();
+                    session_destroy();
+                } else {
+                    $_SESSION['user_id'] = $user['id'];
+                    $_SESSION['username'] = $user['username'];
+                    $_SESSION['role'] = $user['role'];
+                    $_SESSION['shop_id'] = $user['shop_id'];
+                    
+                    header("Location: dashboard.php");
+                    exit();
+                }
             } else {
-                header("Location: dashboard.php");
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['username'] = $user['username'];
+                $_SESSION['role'] = $user['role'];
+                $_SESSION['shop_id'] = $user['shop_id'];
+                
+                header("Location: superadmin_dashboard.php");
+                exit();
             }
-            exit();
         } else {
             $error = "Invalid password.";
         }

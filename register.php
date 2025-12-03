@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $shop_id = mysqli_insert_id($conn);
                 
                 // Create admin user
-                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                $hashed_password = $password;
                 $sql = "INSERT INTO users (shop_id, username, password, role) VALUES ($shop_id, '$username', '$hashed_password', 'admin')";
                 
                 if (mysqli_query($conn, $sql)) {
