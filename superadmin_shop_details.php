@@ -114,14 +114,18 @@ $users_result = mysqli_query($conn, $users_query);
 
     <div class="app-container">
         <?php if ($message): ?>
-            <div class="alert success" style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                ✅ <?php echo $message; ?>
-            </div>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Modal.alert('<?php echo addslashes($message); ?>', 'Success');
+                });
+            </script>
         <?php endif; ?>
         <?php if ($error): ?>
-            <div class="alert error" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                ⚠️ <?php echo $error; ?>
-            </div>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Modal.alert('<?php echo addslashes($error); ?>', 'Error');
+                });
+            </script>
         <?php endif; ?>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
@@ -183,9 +187,9 @@ $users_result = mysqli_query($conn, $users_query);
                 </form>
 
                 <?php if ($shop['status'] == 'active'): ?>
-                <form method="POST" onsubmit="return confirm('Are you sure you want to deactivate this shop? Users will not be able to login.');">
+                <form method="POST" id="deactivateForm">
                     <input type="hidden" name="deactivate_shop" value="1">
-                    <button type="submit" class="btn btn-danger" style="width: 100%;">Deactivate Shop</button>
+                    <button type="button" onclick="confirmDeactivate()" class="btn btn-danger" style="width: 100%;">Deactivate Shop</button>
                 </form>
                 <?php endif; ?>
             </div>
@@ -246,6 +250,17 @@ $users_result = mysqli_query($conn, $users_query);
 
         function closePasswordModal() {
             document.getElementById('passwordModal').classList.remove('active');
+        }
+        
+        
+        function confirmDeactivate() {
+            Modal.confirm(
+                'Are you sure you want to deactivate this shop? Users will not be able to login.',
+                function() {
+                    document.getElementById('deactivateForm').submit();
+                },
+                'Confirm Deactivation'
+            );
         }
         
         // Close modal when clicking outside
