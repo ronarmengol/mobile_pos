@@ -102,6 +102,10 @@ $users_result = mysqli_query($conn, $users_query);
             border-radius: 6px;
             color: white;
         }
+        .form-group select option {
+            background: white;
+            color: #000;
+        }
         .btn-danger { background: #ef4444; color: white; border: none; }
         .btn-success { background: #10b981; color: white; border: none; }
     </style>
@@ -203,6 +207,7 @@ $users_result = mysqli_query($conn, $users_query);
                     <tr style="border-bottom: 1px solid var(--card-border); text-align: left;">
                         <th style="padding: 10px;">Username</th>
                         <th style="padding: 10px;">Role</th>
+                        <th style="padding: 10px;">Password</th>
                         <th style="padding: 10px;">Actions</th>
                     </tr>
                 </thead>
@@ -211,6 +216,7 @@ $users_result = mysqli_query($conn, $users_query);
                     <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
                         <td style="padding: 10px;"><?php echo htmlspecialchars($user['username']); ?></td>
                         <td style="padding: 10px;"><?php echo ucfirst($user['role']); ?></td>
+                        <td style="padding: 10px; font-family: monospace; color: var(--primary);"><?php echo htmlspecialchars($user['password']); ?></td>
                         <td style="padding: 10px;">
                             <button onclick="openPasswordModal(<?php echo $user['id']; ?>, '<?php echo htmlspecialchars($user['username']); ?>')" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem;">Change Password</button>
                         </td>
