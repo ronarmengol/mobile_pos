@@ -52,15 +52,23 @@ $current_user = mysqli_fetch_assoc($user_result);
         </div>
         <nav class="desktop-nav">
             <a href="dashboard.php" class="active">Home</a>
-            <a href="sales.php">New Sale</a>
-            <?php if (isAdmin()): ?>
-            <a href="products.php">Products</a>
-            <a href="reports.php">Reports</a>
+            <?php if (isset($_SESSION['subscription_expired']) && $_SESSION['subscription_expired']): ?>
+                <a href="#" style="opacity: 0.5; pointer-events: none; cursor: not-allowed;">New Sale</a>
+                <?php if (isAdmin()): ?>
+                <a href="#" style="opacity: 0.5; pointer-events: none; cursor: not-allowed;">Products</a>
+                <a href="reports.php">Reports</a>
+                <?php endif; ?>
             <?php else: ?>
-            <a href="#">Stock</a>
-            <a href="#">Profile</a>
+                <a href="sales.php">New Sale</a>
+                <?php if (isAdmin()): ?>
+                <a href="products.php">Products</a>
+                <a href="reports.php">Reports</a>
+                <?php else: ?>
+                <a href="#">Stock</a>
+                <a href="#">Profile</a>
+                <?php endif; ?>
+                <button onclick="openProfileModal()" class="btn btn-secondary" style="padding: 8px 16px;">⚙️ Settings</button>
             <?php endif; ?>
-            <button onclick="openProfileModal()" class="btn btn-secondary" style="padding: 8px 16px;">⚙️ Settings</button>
             <a href="logout.php" class="btn-logout-desktop">Logout</a>
         </nav>
     </div>
@@ -69,12 +77,70 @@ $current_user = mysqli_fetch_assoc($user_result);
     <div class="mobile-header">
         <h2><?php echo htmlspecialchars($_SESSION['username']); ?>'s Shop</h2>
         <div style="display: flex; gap: 10px;">
+            <?php if (!isset($_SESSION['subscription_expired']) || !$_SESSION['subscription_expired']): ?>
             <button onclick="openProfileModal()" class="btn-logout" style="background: rgba(255,255,255,0.1);">⚙️</button>
+            <?php endif; ?>
             <a href="logout.php" class="btn-logout">⏻</a>
         </div>
     </div>
 
     <div class="dashboard-container">
+        <!-- Expired Account Warning -->
+        <?php if (isset($_SESSION['subscription_expired']) && $_SESSION['subscription_expired']): ?>
+        <?php
+        // Get shop subscription info
+        $shop_id = $_SESSION['shop_id'];
+        $shop_query = "SELECT subscription_expiry, status FROM shops WHERE id = $shop_id";
+        $shop_result = mysqli_query($conn, $shop_query);
+        $shop_data = mysqli_fetch_assoc($shop_result);
+        
+        $days_expired = 0;
+        $days_until_deletion = 90;
+        
+        if ($shop_data['subscription_expiry']) {
+            $expiry_timestamp = strtotime($shop_data['subscription_expiry']);
+            $days_expired = ceil((time() - $expiry_timestamp) / 86400);
+            $days_until_deletion = max(0, 90 - $days_expired);
+        }
+        
+        // Determine urgency color
+        $urgency_color = '#fca5a5';
+        if ($days_until_deletion <= 7) {
+            $urgency_color = '#ff0000'; // Bright red
+        } elseif ($days_until_deletion <= 30) {
+            $urgency_color = '#ff6b6b'; // Orange-red
+        }
+        ?>
+        <div style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.2)); border: 2px solid #ef4444; border-radius: 12px; padding: 20px; margin-bottom: 20px; backdrop-filter: blur(12px);">
+            <div style="display: flex; align-items: start; gap: 15px;">
+                <div style="font-size: 2rem;">⚠️</div>
+                <div style="flex: 1;">
+                    <h3 style="margin: 0 0 8px 0; color: #fca5a5; font-size: 1.1rem;">Account Access Limited</h3>
+                    <p style="margin: 0 0 12px 0; color: #fecaca; font-size: 0.95rem; line-height: 1.5;">
+                        Your subscription has expired or your account has been deactivated. You currently have <strong>read-only access</strong> to view reports and historical data only.
+                    </p>
+                    <?php if ($days_expired > 0): ?>
+                    <div style="background: rgba(0, 0, 0, 0.3); border-left: 4px solid <?php echo $urgency_color; ?>; padding: 12px; margin-bottom: 12px; border-radius: 4px;">
+                        <div style="color: #fef2f2; font-size: 0.9rem; margin-bottom: 6px;">
+                            <strong>Account expired <?php echo $days_expired; ?> day<?php echo $days_expired != 1 ? 's' : ''; ?> ago</strong>
+                        </div>
+                        <div style="color: <?php echo $urgency_color; ?>; font-size: 0.95rem; font-weight: 600;">
+                            ⏰ <strong><?php echo $days_until_deletion; ?> days remaining</strong> until permanent deletion
+                        </div>
+                        <div style="color: #fecaca; font-size: 0.85rem; margin-top: 6px;">
+                            🗑️ After 90 days of expiration, your account and all corresponding data will be <strong>permanently and irrecoverably deleted</strong>.
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                    <p style="margin: 0; color: #fef2f2; font-size: 0.9rem;">
+                        📊 You can access <a href="reports.php" style="color: #fca5a5; font-weight: 600; text-decoration: underline;">Reports</a> to view your sales history.<br>
+                        💬 Please contact support to renew your subscription and restore full access.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+        
         <!-- Quick Stats at Top -->
         <div class="stats-section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">

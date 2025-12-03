@@ -20,27 +20,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $shop_check = mysqli_query($conn, "SELECT status, subscription_expiry FROM shops WHERE id = $shop_id");
                 $shop_data = mysqli_fetch_assoc($shop_check);
                 
+                // Set session variables
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['username'] = $user['username'];
+                $_SESSION['role'] = $user['role'];
+                $_SESSION['shop_id'] = $user['shop_id'];
+                
+                // Check if shop is inactive or subscription has expired
                 if ($shop_data['status'] === 'inactive') {
-                    $error = "Your shop account has been deactivated. Please contact support.";
+                    $_SESSION['subscription_expired'] = true; // Treat inactive as expired for UI purposes
                 } elseif ($shop_data['subscription_expiry'] && strtotime($shop_data['subscription_expiry']) < time()) {
-                    // Automatically deactivate expired accounts
-                    mysqli_query($conn, "UPDATE shops SET status = 'inactive' WHERE id = $shop_id");
-                    $error = "Your subscription has expired on " . date('d M Y', strtotime($shop_data['subscription_expiry'])) . ". Please renew to continue.";
+                    $_SESSION['subscription_expired'] = true;
+                } else {
+                    $_SESSION['subscription_expired'] = false;
                 }
                 
-                if (!empty($error)) {
-                    // Don't set session if error
-                    session_unset();
-                    session_destroy();
-                } else {
-                    $_SESSION['user_id'] = $user['id'];
-                    $_SESSION['username'] = $user['username'];
-                    $_SESSION['role'] = $user['role'];
-                    $_SESSION['shop_id'] = $user['shop_id'];
-                    
-                    header("Location: dashboard.php");
-                    exit();
-                }
+                header("Location: dashboard.php");
+                exit();
             } else {
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['username'] = $user['username'];

@@ -2,6 +2,12 @@
 require_once 'functions.php';
 requireLogin();
 
+// Prevent access if subscription expired
+if (isset($_SESSION['subscription_expired']) && $_SESSION['subscription_expired']) {
+    header("Location: dashboard.php");
+    exit();
+}
+
 $shop_id = $_SESSION['shop_id'];
 
 // Handle Sale Submission
