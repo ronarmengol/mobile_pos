@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 if (mysqli_query($conn, $sql)) {
                     $success = "Registration successful! You can now login.";
                     // Redirect after 2 seconds
-                    header("refresh:2;url=index.php");
+                    header("refresh:2;url=login.php");
                 } else {
                     $error = "Error creating user: " . mysqli_error($conn);
                 }
@@ -108,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             <p style="text-align: center; margin-top: 20px; color: var(--text-muted); font-size: 0.9rem;">
                 Already have an account? 
-                <a href="index.php" style="color: var(--primary); font-weight: 600;">Login here</a>
+                <a href="login.php" style="color: var(--primary); font-weight: 600;">Login here</a>
             </p>
         </div>
     </div>

@@ -117,5 +117,5 @@ if (mysqli_num_rows($check_shops) == 0) {
     echo "Cashier Login: cashier / 1234<br>";
 }
 
-echo "Installation Complete. <a href='index.php'>Go to Login</a>";
+echo "Installation Complete. <a href='login.php'>Go to Login</a>";
 ?>
