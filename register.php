@@ -24,8 +24,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if (mysqli_num_rows($check) > 0) {
             $error = "Username already exists. Please choose another.";
         } else {
-            // Create shop
-            $sql = "INSERT INTO shops (name, location) VALUES ('$shop_name', '$location')";
+            // Create shop with 14-day free trial
+            $trial_expiry = date('Y-m-d H:i:s', strtotime('+14 days'));
+            $sql = "INSERT INTO shops (name, location, subscription_expiry, status) VALUES ('$shop_name', '$location', '$trial_expiry', 'active')";
             if (mysqli_query($conn, $sql)) {
                 $shop_id = mysqli_insert_id($conn);
                 

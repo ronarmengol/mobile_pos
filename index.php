@@ -23,6 +23,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 if ($shop_data['status'] === 'inactive') {
                     $error = "Your shop account has been deactivated. Please contact support.";
                 } elseif ($shop_data['subscription_expiry'] && strtotime($shop_data['subscription_expiry']) < time()) {
+                    // Automatically deactivate expired accounts
+                    mysqli_query($conn, "UPDATE shops SET status = 'inactive' WHERE id = $shop_id");
                     $error = "Your subscription has expired on " . date('d M Y', strtotime($shop_data['subscription_expiry'])) . ". Please renew to continue.";
                 }
                 

@@ -154,7 +154,7 @@ $total_revenue = 0;
             </table>
         </div>
 
-        <!-- Product Sales Report Section -->
+        <!-- Product Sales Report Section ->
         <?php
         // Product sales filter
         $product_filter = $_GET['product_filter'] ?? 'today';

@@ -61,6 +61,48 @@ requireLogin();
                     <div class="stat-label">Revenue Today</div>
                 </div>
             </div>
+            
+            <?php
+            // Get subscription info for non-superadmin users
+            if ($_SESSION['role'] !== 'superadmin') {
+                $shop_query = "SELECT subscription_expiry FROM shops WHERE id = $shop_id";
+                $shop_result = mysqli_query($conn, $shop_query);
+                $shop_info = mysqli_fetch_assoc($shop_result);
+                
+                if ($shop_info['subscription_expiry']) {
+                    $expiry_timestamp = strtotime($shop_info['subscription_expiry']);
+                    $days_left = ceil(($expiry_timestamp - time()) / 86400);
+                    $expiry_date = date('d M Y', $expiry_timestamp);
+                    
+                    // Determine color based on days left
+                    $color = '#10b981'; // Green
+                    if ($days_left <= 3) {
+                        $color = '#ef4444'; // Red
+                    } elseif ($days_left <= 7) {
+                        $color = '#f59e0b'; // Orange
+                    }
+            ?>
+            <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid var(--card-border); border-radius: 12px; padding: 15px; margin-top: 15px; backdrop-filter: blur(12px);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Subscription Expires</div>
+                        <div style="font-size: 1rem; font-weight: 600; color: var(--text-main);"><?php echo $expiry_date; ?></div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 1.5rem; font-weight: bold; color: <?php echo $color; ?>;"><?php echo max(0, $days_left); ?></div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">days left</div>
+                    </div>
+                </div>
+                <?php if ($days_left <= 7 && $days_left > 0): ?>
+                <div style="margin-top: 10px; padding: 8px; background: rgba(239, 68, 68, 0.1); border-radius: 6px; font-size: 0.85rem; color: #fca5a5;">
+                    ⚠️ Your subscription is expiring soon. Please contact support to renew.
+                </div>
+                <?php endif; ?>
+            </div>
+            <?php
+                }
+            }
+            ?>
         </div>
 
         <!-- Main Content Area (scrollable) -->

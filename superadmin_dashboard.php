@@ -169,6 +169,41 @@ $shops_result = mysqli_query($conn, $shops_query);
                                 <div class="stat-label">Joined</div>
                             </div>
                         </div>
+                        
+                        <?php
+                        // Calculate subscription info
+                        if ($shop['subscription_expiry']) {
+                            $expiry_timestamp = strtotime($shop['subscription_expiry']);
+                            $days_left = ceil(($expiry_timestamp - time()) / 86400);
+                            $expiry_date = date('d M Y', $expiry_timestamp);
+                            
+                            // Determine color based on days left
+                            $color = '#10b981'; // Green
+                            if ($days_left <= 0) {
+                                $color = '#ef4444'; // Red - Expired
+                            } elseif ($days_left <= 3) {
+                                $color = '#ef4444'; // Red
+                            } elseif ($days_left <= 7) {
+                                $color = '#f59e0b'; // Orange
+                            }
+                        ?>
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 2px;">Subscription Expires</div>
+                                    <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-main);"><?php echo $expiry_date; ?></div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 1.3rem; font-weight: bold; color: <?php echo $color; ?>;"><?php echo max(0, $days_left); ?></div>
+                                    <div style="font-size: 0.7rem; color: var(--text-muted);">days left</div>
+                                </div>
+                            </div>
+                        </div>
+                        <?php } else { ?>
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+                            No subscription set
+                        </div>
+                        <?php } ?>
                     </div>
                 <?php endwhile; ?>
             <?php else: ?>
