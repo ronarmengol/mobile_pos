@@ -49,7 +49,8 @@ $shops_result = mysqli_query($conn, $shops_query);
     <link rel="stylesheet" href="css/style.css">
     <style>
         .super-header {
-            background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+            /* background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); */
+            background: rgba(0, 0, 0, 0.2);
             padding: 20px;
             display: flex;
             justify-content: space-between;
@@ -119,6 +120,32 @@ $shops_result = mysqli_query($conn, $shops_query);
             background: rgba(16, 185, 129, 0.2);
             color: #10b981;
         }
+        .super-btn {
+            background: rgba(30, 41, 59, 0.7) !important;
+            border: none !important;
+            transition: background-color 0.4s ease !important;
+        }
+        .super-btn:hover {
+            background: rgba(255, 255, 255, 0.15) !important;
+        }
+        .super-logout-btn {
+            background: rgba(239, 68, 68, 0.2) !important;
+            border: 1px solid rgba(239, 68, 68, 0.3) !important;
+            color: var(--danger) !important;
+            width: 40px !important;
+            height: 40px !important;
+            border-radius: 50% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 1.3rem !important;
+            padding: 0 !important;
+            transition: all 0.3s !important;
+        }
+        .super-logout-btn:hover {
+            background: rgba(239, 68, 68, 0.3) !important;
+            transform: rotate(90deg) !important;
+        }
     </style>
 </head>
 <body>
@@ -128,8 +155,8 @@ $shops_result = mysqli_query($conn, $shops_query);
             <span style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Overseeing <?php echo mysqli_num_rows($shops_result); ?> Shops</span>
         </div>
         <div style="display: flex; gap: 10px;">
-            <button onclick="openCredentialsModal()" class="btn btn-secondary" style="background: rgba(255,255,255,0.2); border: none;">⚙️ Settings</button>
-            <a href="logout.php" class="btn btn-secondary" style="background: rgba(255,255,255,0.2); border: none;">Logout</a>
+            <button onclick="openCredentialsModal()" class="btn btn-secondary super-btn">⚙️ Settings</button>
+            <a href="logout.php" class="btn btn-secondary super-logout-btn">⏻</a>
         </div>
     </div>
 
