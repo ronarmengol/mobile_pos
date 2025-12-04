@@ -190,12 +190,12 @@ $shops_result = mysqli_query($conn, $shops_query);
                         <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div>
-                                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 2px;">Subscription Expires</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 2px;"><?php echo $days_left <= 0 ? 'Subscription Expired' : 'Subscription Expires'; ?></div>
                                     <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-main);"><?php echo $expiry_date; ?></div>
                                 </div>
                                 <div style="text-align: right;">
-                                    <div style="font-size: 1.3rem; font-weight: bold; color: <?php echo $color; ?>;"><?php echo max(0, $days_left); ?></div>
-                                    <div style="font-size: 0.7rem; color: var(--text-muted);">days left</div>
+                                    <div style="font-size: 1.3rem; font-weight: bold; color: <?php echo $color; ?>;"><?php echo abs($days_left); ?></div>
+                                    <div style="font-size: 0.7rem; color: var(--text-muted);"><?php echo $days_left <= 0 ? 'days expired' : 'days left'; ?></div>
                                 </div>
                             </div>
                         </div>
