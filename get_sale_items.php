@@ -37,7 +37,8 @@ echo json_encode([
     'sale_info' => [
         'total' => $sale_info['total'],
         'payment_method' => $sale_info['payment_method'],
-        'created_at' => $sale_info['created_at']
+        'created_at' => $sale_info['created_at'],
+        'shop_order_number' => $sale_info['shop_order_number']
     ]
 ]);
 ?>

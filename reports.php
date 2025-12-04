@@ -350,7 +350,6 @@ $total_revenue = 0;
     <script src="js/modal.js"></script>
     <script>
         function viewSaleDetails(saleId) {
-            document.getElementById('saleIdDisplay').textContent = saleId;
             document.getElementById('saleDetailsModal').classList.add('active');
             document.getElementById('saleDetailsContent').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">Loading...</div>';
             
@@ -359,6 +358,8 @@ $total_revenue = 0;
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
+                        // Display the shop_order_number instead of database ID
+                        document.getElementById('saleIdDisplay').textContent = data.sale_info.shop_order_number || saleId;
                         displaySaleItems(data.items, data.sale_info);
                     } else {
                         document.getElementById('saleDetailsContent').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--danger);">Error loading sale details.</div>';
