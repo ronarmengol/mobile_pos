@@ -321,28 +321,40 @@ $orders_result = mysqli_query($conn, $orders_query);
                     <?php while ($order = mysqli_fetch_assoc($orders_result)): ?>
                         <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid var(--card-border); border-radius: 12px; padding: 16px; backdrop-filter: blur(10px);">
                             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
-                                <div>
+                                <div style="flex: 1;">
                                     <div style="font-weight: 600; color: white; margin-bottom: 4px;">
                                         <?php echo $order['months']; ?> Month<?php echo $order['months'] > 1 ? 's' : ''; ?> - <?php echo formatPrice($order['amount_paid']); ?>
                                     </div>
                                     <?php if ($order['status'] == 'pending'): ?>
                                         <div style="font-size: 0.85rem; color: var(--text-muted);">
-                                            <?php echo date('d M Y', strtotime($order['created_at'])); ?> • <?php echo htmlspecialchars($order['payment_method']); ?>
+                                            <?php echo date('d-m-Y', strtotime($order['created_at'])); ?> • <?php echo htmlspecialchars($order['payment_method']); ?>
                                         </div>
                                     <?php endif; ?>
                                 </div>
-                                <span style="padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; 
-                                    <?php 
-                                    if ($order['status'] == 'pending') {
-                                        echo 'background: rgba(245, 158, 11, 0.2); color: #fbbf24;';
-                                    } elseif ($order['status'] == 'approved') {
-                                        echo 'background: rgba(16, 185, 129, 0.2); color: #10b981;';
-                                    } else {
-                                        echo 'background: rgba(239, 68, 68, 0.2); color: #ef4444;';
-                                    }
-                                    ?>">
-                                    <?php echo ucfirst($order['status']); ?>
-                                </span>
+                                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                                    <span style="padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; 
+                                        <?php 
+                                        if ($order['status'] == 'pending') {
+                                            echo 'background: rgba(245, 158, 11, 0.2); color: #fbbf24;';
+                                        } elseif ($order['status'] == 'approved') {
+                                            echo 'background: rgba(16, 185, 129, 0.2); color: #10b981;';
+                                        } else {
+                                            echo 'background: rgba(239, 68, 68, 0.2); color: #ef4444;';
+                                        }
+                                        ?>">
+                                        <?php echo ucfirst($order['status']); ?>
+                                    </span>
+                                    <div style="font-size: 0.65rem; color: var(--text-muted); white-space: nowrap;">
+                                        <?php 
+                                        // Show created_at for pending, updated_at for approved/rejected
+                                        if ($order['status'] == 'pending') {
+                                            echo date('d-m-Y H:i', strtotime($order['created_at']));
+                                        } else {
+                                            echo date('d-m-Y H:i', strtotime($order['updated_at']));
+                                        }
+                                        ?>
+                                    </div>
+                                </div>
                             </div>
                             
                             <?php if ($order['admin_message']): ?>
