@@ -31,10 +31,37 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_profile'])) {
     }
 }
 
+// Handle subscription order
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_subscription_order'])) {
+    $months = (int)$_POST['months'];
+    $amount_paid = (float)$_POST['amount_paid'];
+    $payment_method = sanitize($conn, $_POST['payment_method']);
+    $shop_id = $_SESSION['shop_id'];
+    
+    // Validate input
+    if ($months > 0 && $amount_paid > 0 && !empty($payment_method)) {
+        $sql = "INSERT INTO subscription_orders (shop_id, months, amount_paid, payment_method, status) 
+                VALUES ($shop_id, $months, $amount_paid, '$payment_method', 'pending')";
+        
+        if (mysqli_query($conn, $sql)) {
+            $message = "Subscription order submitted successfully! Our team will process your request shortly.";
+        } else {
+            $error = "Error submitting order: " . mysqli_error($conn);
+        }
+    } else {
+        $error = "Please fill in all fields correctly.";
+    }
+}
+
 // Get current user info
 $user_query = "SELECT * FROM users WHERE id = " . $_SESSION['user_id'];
 $user_result = mysqli_query($conn, $user_query);
 $current_user = mysqli_fetch_assoc($user_result);
+
+// Get subscription orders for this shop
+$shop_id = $_SESSION['shop_id'];
+$orders_query = "SELECT * FROM subscription_orders WHERE shop_id = $shop_id ORDER BY created_at DESC LIMIT 5";
+$orders_result = mysqli_query($conn, $orders_query);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -275,6 +302,10 @@ $current_user = mysqli_fetch_assoc($user_result);
                     </span>
                     <span class="action-title">View Reports</span>
                 </a>
+                <a href="#" onclick="openSubscriptionModal(); return false;" class="action-card">
+                    <span class="action-icon">💳</span>
+                    <span class="action-title">Renew Subscription</span>
+                </a>
                 <?php else: ?>
                 <a href="#" class="action-card">
                     <span class="action-icon">📦</span>
@@ -282,6 +313,48 @@ $current_user = mysqli_fetch_assoc($user_result);
                 </a>
                 <?php endif; ?>
             </div>
+
+            <!-- Subscription Order History -->
+            <?php if (mysqli_num_rows($orders_result) > 0): ?>
+                <h3 style="margin: 30px 0 16px 0; color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Subscription Orders</h3>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <?php while ($order = mysqli_fetch_assoc($orders_result)): ?>
+                        <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid var(--card-border); border-radius: 12px; padding: 16px; backdrop-filter: blur(10px);">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                                <div>
+                                    <div style="font-weight: 600; color: white; margin-bottom: 4px;">
+                                        <?php echo $order['months']; ?> Month<?php echo $order['months'] > 1 ? 's' : ''; ?> - <?php echo formatPrice($order['amount_paid']); ?>
+                                    </div>
+                                    <?php if ($order['status'] == 'pending'): ?>
+                                        <div style="font-size: 0.85rem; color: var(--text-muted);">
+                                            <?php echo date('d M Y', strtotime($order['created_at'])); ?> • <?php echo htmlspecialchars($order['payment_method']); ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                                <span style="padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; 
+                                    <?php 
+                                    if ($order['status'] == 'pending') {
+                                        echo 'background: rgba(245, 158, 11, 0.2); color: #fbbf24;';
+                                    } elseif ($order['status'] == 'approved') {
+                                        echo 'background: rgba(16, 185, 129, 0.2); color: #10b981;';
+                                    } else {
+                                        echo 'background: rgba(239, 68, 68, 0.2); color: #ef4444;';
+                                    }
+                                    ?>">
+                                    <?php echo ucfirst($order['status']); ?>
+                                </span>
+                            </div>
+                            
+                            <?php if ($order['admin_message']): ?>
+                                <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 10px; margin-top: 10px;">
+                                    <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Admin Message:</div>
+                                    <div style="color: #93c5fd; font-size: 0.9rem;"><?php echo htmlspecialchars($order['admin_message']); ?></div>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    <?php endwhile; ?>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -377,6 +450,50 @@ $current_user = mysqli_fetch_assoc($user_result);
         </div>
     </div>
 
+    <!-- Subscription Order Modal -->
+    <div id="subscriptionModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 450px;">
+            <h3>💳 Renew Subscription</h3>
+            <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem;">Submit your subscription renewal request. Our team will process it shortly.</p>
+            <form method="POST">
+                <input type="hidden" name="submit_subscription_order" value="1">
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; color: var(--text-muted);">Number of Months</label>
+                    <select name="months" required style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); border-radius: 6px; color: white; background: rgba(30, 41, 59, 0.9);">
+                        <option value="">Select duration...</option>
+                        <option value="1">1 Month</option>
+                        <option value="3">3 Months</option>
+                        <option value="6">6 Months</option>
+                        <option value="12">12 Months (1 Year)</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; color: var(--text-muted);">Amount Paid (K)</label>
+                    <input type="number" name="amount_paid" step="0.01" min="0" placeholder="Enter amount" required style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); border-radius: 6px; color: white;">
+                </div>
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; color: var(--text-muted);">Payment Method</label>
+                    <select name="payment_method" required style="width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); border-radius: 6px; color: white;  background: rgba(30, 41, 59, 0.9)">
+                        <option value="">Select payment method...</option>
+                        <option value="Mobile Money">Mobile Money</option>
+                        <option value="Bank Transfer">Bank Transfer</option>
+                        <option value="Cash">Cash</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+                    <p style="color: #93c5fd; font-size: 0.85rem; margin: 0;">
+                        ℹ️ Your order will be reviewed by our team. You'll receive a confirmation once approved.
+                    </p>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" onclick="closeSubscriptionModal()" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Submit Order</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <?php if ($message): ?>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
@@ -414,6 +531,22 @@ $current_user = mysqli_fetch_assoc($user_result);
         document.getElementById('profileModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeProfileModal();
+            }
+        });
+
+        // Subscription Modal Functions
+        function openSubscriptionModal() {
+            document.getElementById('subscriptionModal').classList.add('active');
+        }
+
+        function closeSubscriptionModal() {
+            document.getElementById('subscriptionModal').classList.remove('active');
+        }
+
+        // Close subscription modal when clicking outside
+        document.getElementById('subscriptionModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeSubscriptionModal();
             }
         });
     </script>

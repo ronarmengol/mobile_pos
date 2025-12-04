@@ -39,6 +39,12 @@ $shops_query = "
     ORDER BY s.created_at DESC
 ";
 $shops_result = mysqli_query($conn, $shops_query);
+
+// Get pending orders count
+$pending_orders_query = "SELECT COUNT(*) as count FROM subscription_orders WHERE status = 'pending'";
+$pending_orders_result = mysqli_query($conn, $pending_orders_query);
+$pending_orders = mysqli_fetch_assoc($pending_orders_result);
+$pending_count = $pending_orders['count'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -155,6 +161,14 @@ $shops_result = mysqli_query($conn, $shops_query);
             <span style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Overseeing <?php echo mysqli_num_rows($shops_result); ?> Shops</span>
         </div>
         <div style="display: flex; gap: 10px;">
+            <a href="superadmin_subscription_orders.php" class="btn btn-secondary super-btn" style="position: relative;">
+                📋 Orders
+                <?php if ($pending_count > 0): ?>
+                    <span style="position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold;">
+                        <?php echo $pending_count; ?>
+                    </span>
+                <?php endif; ?>
+            </a>
             <button onclick="openCredentialsModal()" class="btn btn-secondary super-btn">⚙️ Settings</button>
             <a href="logout.php" class="btn btn-secondary super-logout-btn">⏻</a>
         </div>

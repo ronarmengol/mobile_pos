@@ -1,0 +1,40 @@
+<?php
+require_once 'functions.php';
+
+// Create subscription_orders table
+$sql = "CREATE TABLE IF NOT EXISTS subscription_orders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    shop_id INT NOT NULL,
+    months INT NOT NULL,
+    amount_paid DECIMAL(10, 2) NOT NULL,
+    payment_method VARCHAR(50) NOT NULL,
+    status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+    admin_message TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE CASCADE
+)";
+
+if (mysqli_query($conn, $sql)) {
+    echo "✓ Table 'subscription_orders' created successfully\n";
+} else {
+    echo "✗ Error creating table: " . mysqli_error($conn) . "\n";
+}
+
+// Add indexes
+$sql = "CREATE INDEX IF NOT EXISTS idx_shop_status ON subscription_orders(shop_id, status)";
+if (mysqli_query($conn, $sql)) {
+    echo "✓ Index 'idx_shop_status' created successfully\n";
+} else {
+    echo "Note: " . mysqli_error($conn) . "\n";
+}
+
+$sql = "CREATE INDEX IF NOT EXISTS idx_status ON subscription_orders(status)";
+if (mysqli_query($conn, $sql)) {
+    echo "✓ Index 'idx_status' created successfully\n";
+} else {
+    echo "Note: " . mysqli_error($conn) . "\n";
+}
+
+echo "\nMigration completed!\n";
+?>
