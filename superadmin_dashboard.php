@@ -161,10 +161,61 @@ $shops_result = mysqli_query($conn, $shops_query);
     </div>
 
     <div class="app-container">
-        <div class="shop-grid">
+        <!-- Filter Controls -->
+        <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid var(--card-border); border-radius: 12px; padding: 20px; margin-bottom: 20px; backdrop-filter: blur(10px);">
+            <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
+                <div style="flex: 1; min-width: 200px;">
+                    <label style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 0.85rem;">Search by Name</label>
+                    <input type="text" id="searchName" placeholder="Search shops..." style="width: 100%; padding: 10px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--card-border); border-radius: 8px; color: white; font-size: 0.9rem;">
+                </div>
+                <div style="min-width: 180px;">
+                    <label style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 0.85rem;">Sort By</label>
+                    <select id="sortBy" style="width: 100%; padding: 10px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--card-border); border-radius: 8px; color: white; font-size: 0.9rem; cursor: pointer;">
+                        <option value="name">Name (A-Z)</option>
+                        <option value="name_desc">Name (Z-A)</option>
+                        <option value="date_registered">Date Registered (Oldest)</option>
+                        <option value="date_registered_desc" selected>Date Registered (Newest)</option>
+                        <option value="expiry_asc">Expiry Date (Soonest)</option>
+                        <option value="expiry_desc">Expiry Date (Latest)</option>
+                        <option value="days_left_asc">Days Left (Least)</option>
+                        <option value="days_left_desc">Days Left (Most)</option>
+                    </select>
+                </div>
+                <div style="min-width: 150px;">
+                    <label style="display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 0.85rem;">Status Filter</label>
+                    <select id="statusFilter" style="width: 100%; padding: 10px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--card-border); border-radius: 8px; color: white; font-size: 0.9rem; cursor: pointer;">
+                        <option value="all">All Shops</option>
+                        <option value="active">Active Only</option>
+                        <option value="expired">Expired Only</option>
+                        <option value="expiring_soon">Expiring Soon (≤7 days)</option>
+                    </select>
+                </div>
+                <div style="padding-top: 20px;">
+                    <button onclick="resetFilters()" style="padding: 10px 20px; background: rgba(255, 255, 255, 0.1); border: 1px solid var(--card-border); border-radius: 8px; color: white; cursor: pointer; transition: all 0.3s; font-size: 0.9rem;">Reset</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="shop-grid" id="shopGrid">
             <?php if (mysqli_num_rows($shops_result) > 0): ?>
                 <?php while ($shop = mysqli_fetch_assoc($shops_result)): ?>
-                    <div class="shop-card">
+                    <?php
+                    // Calculate subscription info for filtering
+                    $days_left = 0;
+                    $expiry_timestamp = 0;
+                    if ($shop['subscription_expiry']) {
+                        $expiry_timestamp = strtotime($shop['subscription_expiry']);
+                        $days_left = ceil(($expiry_timestamp - time()) / 86400);
+                    }
+                    $is_expired = $days_left <= 0;
+                    $is_expiring_soon = $days_left > 0 && $days_left <= 7;
+                    ?>
+                    <div class="shop-card" 
+                         data-name="<?php echo strtolower(htmlspecialchars($shop['name'])); ?>"
+                         data-registered="<?php echo strtotime($shop['created_at']); ?>"
+                         data-expiry="<?php echo $expiry_timestamp; ?>"
+                         data-days-left="<?php echo $days_left; ?>"
+                         data-status="<?php echo $is_expired ? 'expired' : ($is_expiring_soon ? 'expiring_soon' : 'active'); ?>">
                         <div class="shop-header">
                             <div>
                                 <div class="shop-name"><?php echo htmlspecialchars($shop['name']); ?></div>
@@ -198,10 +249,8 @@ $shops_result = mysqli_query($conn, $shops_query);
                         </div>
                         
                         <?php
-                        // Calculate subscription info
+                        // Calculate subscription info for display
                         if ($shop['subscription_expiry']) {
-                            $expiry_timestamp = strtotime($shop['subscription_expiry']);
-                            $days_left = ceil(($expiry_timestamp - time()) / 86400);
                             $expiry_date = date('d M Y', $expiry_timestamp);
                             
                             // Determine color based on days left
@@ -302,6 +351,108 @@ $shops_result = mysqli_query($conn, $shops_query);
             if (e.target === this) {
                 closeCredentialsModal();
             }
+        });
+
+        // Filtering and Sorting Functionality
+        const searchInput = document.getElementById('searchName');
+        const sortSelect = document.getElementById('sortBy');
+        const statusFilter = document.getElementById('statusFilter');
+        const shopGrid = document.getElementById('shopGrid');
+        let allShops = [];
+
+        // Initialize shops array
+        function initializeShops() {
+            const shopCards = document.querySelectorAll('.shop-card');
+            allShops = Array.from(shopCards).map(card => ({
+                element: card,
+                name: card.dataset.name || '',
+                registered: parseInt(card.dataset.registered) || 0,
+                expiry: parseInt(card.dataset.expiry) || 0,
+                daysLeft: parseInt(card.dataset.daysLeft) || 0,
+                status: card.dataset.status || 'active'
+            }));
+        }
+
+        // Filter and sort shops
+        function filterAndSortShops() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const sortBy = sortSelect.value;
+            const status = statusFilter.value;
+
+            // Filter shops
+            let filteredShops = allShops.filter(shop => {
+                // Name filter
+                const matchesName = shop.name.includes(searchTerm);
+                
+                // Status filter
+                let matchesStatus = true;
+                if (status === 'active') {
+                    matchesStatus = shop.status === 'active';
+                } else if (status === 'expired') {
+                    matchesStatus = shop.status === 'expired';
+                } else if (status === 'expiring_soon') {
+                    matchesStatus = shop.status === 'expiring_soon';
+                }
+                
+                return matchesName && matchesStatus;
+            });
+
+            // Sort shops
+            filteredShops.sort((a, b) => {
+                switch(sortBy) {
+                    case 'name':
+                        return a.name.localeCompare(b.name);
+                    case 'name_desc':
+                        return b.name.localeCompare(a.name);
+                    case 'date_registered':
+                        return a.registered - b.registered;
+                    case 'date_registered_desc':
+                        return b.registered - a.registered;
+                    case 'expiry_asc':
+                        // Put shops without expiry at the end
+                        if (a.expiry === 0) return 1;
+                        if (b.expiry === 0) return -1;
+                        return a.expiry - b.expiry;
+                    case 'expiry_desc':
+                        if (a.expiry === 0) return 1;
+                        if (b.expiry === 0) return -1;
+                        return b.expiry - a.expiry;
+                    case 'days_left_asc':
+                        return a.daysLeft - b.daysLeft;
+                    case 'days_left_desc':
+                        return b.daysLeft - a.daysLeft;
+                    default:
+                        return 0;
+                }
+            });
+
+            // Update DOM
+            shopGrid.innerHTML = '';
+            if (filteredShops.length > 0) {
+                filteredShops.forEach(shop => {
+                    shopGrid.appendChild(shop.element);
+                });
+            } else {
+                shopGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);"><h3>No shops found</h3><p>Try adjusting your filters.</p></div>';
+            }
+        }
+
+        // Reset filters
+        function resetFilters() {
+            searchInput.value = '';
+            sortSelect.value = 'date_registered_desc';
+            statusFilter.value = 'all';
+            filterAndSortShops();
+        }
+
+        // Event listeners
+        searchInput.addEventListener('input', filterAndSortShops);
+        sortSelect.addEventListener('change', filterAndSortShops);
+        statusFilter.addEventListener('change', filterAndSortShops);
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeShops();
         });
     </script>
 </body>
