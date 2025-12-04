@@ -663,6 +663,13 @@ label {
     margin-bottom: 8px;
 }
 
+.action-icon svg {
+    width: px;
+    height: 24px;
+    stroke: var(--text-muted) !important;
+    fill: var(--text-muted) !important;
+}
+
 .action-title {
     font-size: 0.95rem;
     font-weight: 600;
