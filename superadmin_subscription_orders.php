@@ -54,7 +54,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['reject_order'])) {
     }
 }
 
-// Fetch all subscription orders
+// Pagination setup
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$page = max(1, $page); // Ensure page is at least 1
+$limit = 10;
+$offset = ($page - 1) * $limit;
+
+// Count total orders
+$count_query = "SELECT COUNT(*) as total FROM subscription_orders";
+$count_result = mysqli_query($conn, $count_query);
+$count_row = mysqli_fetch_assoc($count_result);
+$total_orders = $count_row['total'];
+$total_pages = ceil($total_orders / $limit);
+
+// Fetch subscription orders with pagination
 $orders_query = "
     SELECT so.*, s.name as shop_name, s.location, s.subscription_expiry
     FROM subscription_orders so
@@ -66,6 +79,7 @@ $orders_query = "
             WHEN 'rejected' THEN 3 
         END,
         so.created_at DESC
+    LIMIT $limit OFFSET $offset
 ";
 $orders_result = mysqli_query($conn, $orders_query);
 ?>
@@ -245,6 +259,50 @@ $orders_result = mysqli_query($conn, $orders_query);
             <div style="text-align: center; padding: 60px 20px; color: var(--text-muted);">
                 <h3>No subscription orders yet</h3>
                 <p>Orders will appear here when shop owners submit subscription renewal requests.</p>
+            </div>
+        <?php endif; ?>
+
+        <?php if ($total_pages > 1): ?>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px; padding: 20px; background: rgba(30, 41, 59, 0.5); border-radius: 12px;">
+                <div style="color: var(--text-muted); font-size: 0.9rem;">
+                    Showing <?php echo min($offset + 1, $total_orders); ?>-<?php echo min($offset + $limit, $total_orders); ?> of <?php echo $total_orders; ?> orders
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <?php if ($page > 1): ?>
+                        <a href="?page=<?php echo $page - 1; ?>" class="btn btn-secondary" style="padding: 8px 12px; font-size: 0.9rem;">← Previous</a>
+                    <?php endif; ?>
+                    
+                    <?php
+                    // Show page numbers
+                    $start_page = max(1, $page - 2);
+                    $end_page = min($total_pages, $page + 2);
+                    
+                    if ($start_page > 1): ?>
+                        <a href="?page=1" class="btn btn-secondary" style="padding: 8px 12px; font-size: 0.9rem;">1</a>
+                        <?php if ($start_page > 2): ?>
+                            <span style="color: var(--text-muted); padding: 0 8px;">...</span>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                    
+                    <?php for ($i = $start_page; $i <= $end_page; $i++): ?>
+                        <a href="?page=<?php echo $i; ?>" 
+                           class="btn <?php echo $i == $page ? 'btn-primary' : 'btn-secondary'; ?>" 
+                           style="padding: 8px 12px; font-size: 0.9rem; min-width: 40px; text-align: center;">
+                            <?php echo $i; ?>
+                        </a>
+                    <?php endfor; ?>
+                    
+                    <?php if ($end_page < $total_pages): ?>
+                        <?php if ($end_page < $total_pages - 1): ?>
+                            <span style="color: var(--text-muted); padding: 0 8px;">...</span>
+                        <?php endif; ?>
+                        <a href="?page=<?php echo $total_pages; ?>" class="btn btn-secondary" style="padding: 8px 12px; font-size: 0.9rem;"><?php echo $total_pages; ?></a>
+                    <?php endif; ?>
+                    
+                    <?php if ($page < $total_pages): ?>
+                        <a href="?page=<?php echo $page + 1; ?>" class="btn btn-secondary" style="padding: 8px 12px; font-size: 0.9rem;">Next →</a>
+                    <?php endif; ?>
+                </div>
             </div>
         <?php endif; ?>
     </div>

@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Takeaway POS</title>
+    <title>Login - Mobile POS</title>
     <style>
         * {
             margin: 0;
@@ -69,36 +69,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            margin: 0;
+            padding: 0;
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            position: relative;
             overflow: hidden;
         }
 
-        /* Animated background particles */
-        body::before {
-            content: '';
-            position: absolute;
-            width: 200%;
-            height: 200%;
-            background-image: 
-                radial-gradient(2px 2px at 20% 30%, rgba(255, 255, 255, 0.15), transparent),
-                radial-gradient(2px 2px at 60% 70%, rgba(255, 255, 255, 0.1), transparent),
-                radial-gradient(1px 1px at 50% 50%, rgba(255, 255, 255, 0.1), transparent),
-                radial-gradient(1px 1px at 80% 10%, rgba(255, 255, 255, 0.15), transparent),
-                radial-gradient(2px 2px at 90% 60%, rgba(255, 255, 255, 0.1), transparent),
-                radial-gradient(1px 1px at 33% 80%, rgba(255, 255, 255, 0.1), transparent);
-            background-size: 200% 200%;
-            animation: particle-animation 20s linear infinite;
-        }
 
-        @keyframes particle-animation {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(-50%, -50%); }
+
+        @keyframes particle-float {
+            0%, 100% { 
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            50% { 
+                transform: translate(-20px, -20px) scale(1.1);
+                opacity: 0.8;
+            }
         }
 
 
@@ -106,41 +93,66 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         .login-wrapper {
             display: flex;
             flex-direction: column;
-            max-width: 400px;
+            min-height: 100vh;
             width: 100%;
-            background: rgba(30, 41, 59, 0.4);
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
             position: relative;
-            z-index: 1;
+            overflow: hidden;
         }
 
-        /* Glow effect */
+        /* Animated background particles inside wrapper */
         .login-wrapper::before {
             content: '';
             position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(45deg, rgba(99, 102, 241, 0.3), rgba(168, 85, 247, 0.3));
-            border-radius: 16px;
-            z-index: -1;
-            opacity: 0.5;
-            filter: blur(20px);
+            top: 50%;
+            left: 50%;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 
+                100px 200px 0 0 rgba(255, 255, 255, 0.8),
+                -150px 300px 0 1px rgba(255, 255, 255, 0.6),
+                250px -100px 0 0 rgba(255, 255, 255, 0.7),
+                -300px -200px 0 1px rgba(255, 255, 255, 0.5),
+                400px 150px 0 0 rgba(255, 255, 255, 0.9),
+                -450px 50px 0 1px rgba(255, 255, 255, 0.6),
+                200px -250px 0 0 rgba(255, 255, 255, 0.7),
+                -100px -350px 0 1px rgba(255, 255, 255, 0.8),
+                350px 300px 0 0 rgba(255, 255, 255, 0.5),
+                -250px 150px 0 1px rgba(255, 255, 255, 0.7),
+                150px -150px 0 0 rgba(255, 255, 255, 0.6),
+                -350px 250px 0 1px rgba(255, 255, 255, 0.8),
+                450px -50px 0 0 rgba(255, 255, 255, 0.5),
+                -200px -100px 0 1px rgba(255, 255, 255, 0.9),
+                300px 250px 0 0 rgba(255, 255, 255, 0.6),
+                -400px -150px 0 1px rgba(255, 255, 255, 0.7),
+                50px 350px 0 0 rgba(255, 255, 255, 0.8),
+                -500px 100px 0 1px rgba(255, 255, 255, 0.5),
+                500px 200px 0 0 rgba(255, 255, 255, 0.7),
+                -50px 400px 0 1px rgba(255, 255, 255, 0.6);
+            animation: particle-float 30s linear infinite;
+            z-index: 0;
         }
+
+
 
         /* Mobile-first: Form section comes first */
         .form-section {
             padding: 30px 20px;
-            background: rgba(30, 41, 59, 0.6);
-            backdrop-filter: blur(10px);
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(20px);
             display: flex;
             flex-direction: column;
             justify-content: center;
+            position: relative;
+            z-index: 1;
+            max-width: 400px;
+            width: 100%;
+            margin: auto;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .form-section h2 {
@@ -264,6 +276,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         /* Welcome section - hidden on mobile, shown only on desktop */
         .welcome-section {
             display: none;
+            position: relative;
+            z-index: 1;
         }
 
         /* Tablet and up - 640px+ */
@@ -278,13 +292,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         @media (min-width: 968px) {
             .login-wrapper {
                 flex-direction: row;
-                max-width: 1100px;
-                border-radius: 24px;
+                align-items: center;
+                justify-content: center;
+                padding: 40px;
             }
 
-            .login-wrapper::before {
-                border-radius: 24px;
+            .form-section {
+                margin: 0;
+                max-width: 450px;
             }
+
+
 
             .welcome-section {
                 display: flex;
@@ -363,7 +381,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <body>
     <div class="login-wrapper">
         <div class="form-section">
-            <h2>Takeaway POS - Login</h2>
+            <h2>Mobile POS - Login</h2>
             
             <?php if ($error): ?>
                 <div class="alert error">⚠️ <?php echo $error; ?></div>
@@ -404,7 +422,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <li>Quick Orders</li>
                 <li>Inventory Tracking</li>
                 <li>Real-time Sales Data</li>
-                <li>Secure Payments</li>
             </ul>
             
             <p class="footer-text">Your shop, everywhere</p>
